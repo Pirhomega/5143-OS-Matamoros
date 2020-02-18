@@ -1,1 +1,6 @@
 *.code-workspace
+*.pdf
+*.exe
+.vscode/
+5143-gosh/.vscode
+5143-gosh/split/.vs
