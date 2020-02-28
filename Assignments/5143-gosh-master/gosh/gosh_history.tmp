@@ -1,0 +1,57 @@
+cat ls.go
+rm cat.exe
+ls
+!0
+ooga
+exit
+cd ..
+pwd
+cd ..
+pwd
+cd 5143-gosh
+pwd
+cd gosh
+pwd
+exit
+history
+cat gosh.go wc.go
+!0
+bummer
+ooga
+cat chmod.go
+eat
+!0
+!0
+!7
+!0
+!0
+!o
+cat chmod.go
+!0
+!6
+!0
+cat ls.go
+cat chmod.go
+!67896789
+!0
+cat ls.go
+cat chmod.go
+!0
+cat ls.go
+!0
+cat ls.go
+!0
+cat ls.go
+!0
+cat ls.go
+!0
+cat ls.go
+!1
+rm cat.exe
+!2
+ls
+split 
+split
+split C:/Users/Owner/Desktop/5143-gosh/tester/history.go
+split C:/Users/Owner/Desktop/5143-gosh/gosh/history.go
+split history.go
