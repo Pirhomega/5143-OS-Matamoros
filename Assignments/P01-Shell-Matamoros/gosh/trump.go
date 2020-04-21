@@ -18,14 +18,14 @@ func init() {
 // Trump ...
 func Trump(args []string) {
 	// Open trump sound file
-	soundf, err := os.Open("assets/trump.wav")
+	soundf, err := os.Open("trump.wav")
 	if err != nil {
 		fmt.Println("Error opening sound file: ", err)
 	}
 	defer soundf.Close()
 
 	// Read the text file into a string
-	content, err := ioutil.ReadFile("assets/trump")
+	content, err := ioutil.ReadFile("trump")
 	if err != nil {
 		fmt.Println("Error opening text file: ", err)
 	}
