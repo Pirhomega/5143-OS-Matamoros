@@ -1,36 +1,54 @@
+#!C:/Users/Owner/AppData/Local/Programs/Python/Python37/python.exe
+
 # The server's job is to randomly generate a number between two other randomly generated numbers.
 # The server's ports are always open but guarded by a mutex sitting in another process. If a client
 # is trying to connect, the server will do so and trade messages with it (figure that out later). 
 # If the client guesses the correct number the server randomly generated, the client will disconnect.
 
-import socket
+import socket, queue, random
 
-class Mutex:
-    # if self.mutex is 0, the resource it's guarding are blocked from use
-    # if self.mutex is 1, the resources it's guarding is free to use
-    def __init__(self):
-        self.mutex = 0
-    # processes call this when they've finished using the resources the mutex guards
-    def mutexSignal(self):
-        if self.mutex == 0:
-            self.mutex = 1
-            return True
-        else:
-            self.mutex == 1
-            return True
-    # processes call this when they want to access a resource the mutex guards
-    def mutexWait(self):
-        if self.mutex == 0:
-            return False
-        else:
-            self.mutex == 1
-            return True
+class Server:
+    def __init__(self, bindto=(), num_conns=1):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(bindto)
+        self.server.listen(num_conns)
+        self.guess_q = queue.Queue(0)
+        self.conn_list = {}
+        self.value = self.decide_value()
+        print(self.value)
+    
+    # accept an incoming connection
+    def accept(self):
+        print("Server said: Waiting for connections!")
+        (connection, client_address) = self.server.accept()
+        print("Server said: Got a connection from", client_address)
+        # add the client connection to the dictionary for safe-keeping
+        # self.conn_list[client_address] = connection
+        try:
+            while True:
+                data = connection.recv(4096)
+                if data:
+                    print("Server said: Received a message from", client_address)
+                    print("Client said:", data)
+                    print("Server said: Sending a reply to", client_address)
+                    connection.sendall(b'owo i wan u so badly client-senpai')
+                else:
+                    break
+        finally:
+            print("Server said: Closing connection with", client_address)
+            connection.close()
+    
+    def decide_value(self):
+        low = random.randint(0, 2147483646)
+        print("The low is:", low)
+        high = random.randint(low, 2147483647)
+        print("The high is:", high)
+        # returns a random value between two randomly chosen values (low, high)
+        return random.randint(low, high)
 
-# create the semaphore class object
-semaphore = Mutex()
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('0.0.0.0', 8080))
-server.listen(3)
+###############################################################################################
+#                                        MAIN                                                 #
+###############################################################################################
 
-while True:
-    (clientsocket, address) = server.accept()
+server_object = Server( ('localhost', 8080), 1 )
+server_object.accept()
