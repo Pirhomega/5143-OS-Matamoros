@@ -50,5 +50,5 @@ class Server:
 #                                        MAIN                                                 #
 ###############################################################################################
 
-server_object = Server( ('localhost', 8080), 1 )
+server_object = Server( ('localhost', 6060), 4 )
 server_object.accept()
