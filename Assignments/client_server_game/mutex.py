@@ -19,48 +19,42 @@ class Mutex:
         print("Mutex said: Got a connection from", self.data.addr)
         # add the client connection to the dictionary for safe-keeping
         # self.conn_list[client_address] = connection
-        try:
+        with connection:
             while True:
                 data = connection.recv(64)
-                if data:
-                    self.data.outb += data
-                    print("Mutex said: Received a message from", self.data.addr)
-                    print("Mutex said: Message now states:", self.data.outb)
-                    # if the client sends a 1, it is calling 'mutexWait'
-                    if data == b'0':
-                        print("Mutex said: It called WAIT. Sending a reply to", self.data.addr)
-                        mess_back = bytes(self.mutexWait(), encoding='utf8')
-                        connection.sendall(mess_back)
-                        print("Mutex said: Sent:", mess_back)
-                    # otherwise, it's calling 'mutexSignal'
-                    else:
-                        print("Mutex said: It called SIGNAL. Sending a reply to", self.data.addr)
-                        connection.sendall(bytes(self.mutexSignal(), encoding='utf8'))
-                        print("Mutex said: Sent!")
-                else:
+                if data == b'':
                     print("breaking")
                     break
-        finally:
-            print("Mutex said: Closing connection with", self.data.addr)
-            print("Mutex said: The mutex value is:", self.mutex)
-            connection.close()
+                self.data.outb += data
+            print("Mutex said: Received a message from", self.data.addr)
+            print("Mutex said: Message now states:", self.data.outb)
+            # if the client sends a 0, it is calling 'mutexWait'
+            if self.data.outb == b'0':
+                print("Mutex said: It called WAIT. Sending a reply to", self.data.addr)
+                connection.sendall(self.mutexWait())
+            # otherwise, it's calling 'mutexSignal'
+            elif self.data.outb == b'1':
+                print("Mutex said: It called SIGNAL. Sending a reply to", self.data.addr)
+                connection.sendall(self.mutexSignal())
+            print("Mutex said: Sent!")
+            # shutdown measures
             self.data.outb = b''
-            print("Closed")
+            print("Shuttin' down.")
+            connection.shutdown(socket.SHUT_WR)
 
     # processes call this when they've finished using the resources the mutex guards
     def mutexSignal(self):
         self.mutex = 1
-        return '2'
+        return b'2'
 
     # processes call this when they want to access a resource the mutex guards
     # Calls to mutexWait must pass the socket object of the client trying to connect
     def mutexWait(self):
         if self.mutex == 0:
-            print("We're not open!")
-            return '0'
+            return b'0'
         else:
             self.mutex = 0
-            return '1'
+            return b'1'
 
 ###############################################################################################
 #                                        MAIN                                                 #
