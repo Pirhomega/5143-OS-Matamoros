@@ -5,7 +5,7 @@
 # is trying to connect, the server will do so and trade messages with it (figure that out later). 
 # If the client guesses the correct number the server randomly generated, the client will disconnect.
 
-import socket, queue, random, types, selectors
+import socket, queue, random, types, selectors, time
 
 class Server:
     def __init__(self, bindto=(), num_conns=1):
@@ -17,9 +17,9 @@ class Server:
         # self.sel.register(self.server, selectors.EVENT_READ, data=None)
 
         self.data = types.SimpleNamespace(addr=bindto[0], outb=b'')
-        self.guess_q = queue.Queue(0)
-        self.conn_list = {}
         self.value = self.decide_value()
+        self.guessed = True
+        self.count = 0
         self.response = b''
         print(self.value)
     
@@ -44,47 +44,24 @@ class Server:
             #     print("No more data!")
             #     break
             # self.data.outb += data
-            print("Client said:", self.data.outb)
             print("Server said: Sending a reply to", self.data.addr)
-            # see if the client's guess is correct
-            self.compare_number(int(self.data.outb))
+            if not self.guessed or self.count == 2:
+                self.compare_number(int(self.data.outb))
+                self.guessed = False
+                self.count = 0
+            else:
+                print("Resetting them all because someone guessed correctly.")
+                print(self.count)
+                time.sleep(3)
+                self.count += 1
+                self.response = b'2'
             connection.sendall(self.response)
             # shutdown measures
             self.data.outb = b''
-            # print("Shuttin' down.")
-            # connection.shutdown(socket.SHUT_WR)
-    
-    # def accept_wrapper(self, sock):
-    #     conn, addr = sock.accept()  # Should be ready to read
-    #     print('accepted connection from', addr)
-    #     conn.setblocking(False)
-    #     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
-    #     events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    #     self.sel.register(conn, events, data=data)
-
-    # def service_connection(self, key, mask):
-    #     sock = key.fileobj
-    #     data = key.data
-    #     if mask & selectors.EVENT_READ:
-    #         recv_data = sock.recv(1024)  # Should be ready to read
-    #         if recv_data:
-    #             data.outb += recv_data
-    #         else:
-    #             print("closing connection to", data.addr)
-    #             self.sel.unregister(sock)
-    #             sock.close()
-    #     if mask & selectors.EVENT_WRITE:
-    #         if data.outb:
-    #             print("echoing", repr(data.outb), "to", data.addr)
-    #             sent = sock.send(data.outb)  # Should be ready to write
-    #             data.outb = data.outb[sent:]
-
 
     def decide_value(self):
         low = random.randint(0, 2147483646)
-        print("The low is:", low)
         high = random.randint(low, 2147483647)
-        print("The high is:", high)
         # returns a random value between two randomly chosen values (low, high)
         return random.randint(low, high)
     
@@ -95,6 +72,9 @@ class Server:
             self.response = b'1'
         else:
             self.response = b'0'
+            # choose another number for clients to guess
+            self.value = self.decide_value()
+            print(self.value)
 
 ###############################################################################################
 #                                        MAIN                                                 #
