@@ -11,6 +11,7 @@ class Server:
     def __init__(self, bindto=(), num_conns=1):
         # self.sel = selectors.DefaultSelector()
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind(bindto)
         self.server.listen(num_conns)
         # self.server.setblocking(False)
@@ -18,7 +19,7 @@ class Server:
 
         self.data = types.SimpleNamespace(addr=bindto[0], outb=b'')
         self.value = self.decide_value()
-        self.guessed = True
+        self.guessed = False
         self.count = 0
         self.response = b''
         print(self.value)
@@ -31,33 +32,34 @@ class Server:
         #         self.accept_wrapper(key.fileobj)
         #     else:
         #         self.service_connection(key, mask)
-        print("Server said: Waiting for connections!")
+        # print("Server said: Waiting for connections!")
         (connection, self.data.addr) = self.server.accept()
-        print("Server said: Got a connection from", self.data.addr)
+        # print("Server said: Got a connection from", self.data.addr)
         # add the client connection to the dictionary for safe-keeping
         # self.conn_list[client_address] = connection
         with connection:
             # while True:
-            print("Time to receive data!")
+            # print("Time to receive data!")
             self.data.outb = connection.recv(64)
             # if data == b'':
             #     print("No more data!")
             #     break
             # self.data.outb += data
-            print("Server said: Sending a reply to", self.data.addr)
+            # print("Server said: Sending a reply to", self.data.addr)
             if not self.guessed or self.count == 2:
-                self.compare_number(int(self.data.outb))
                 self.guessed = False
                 self.count = 0
+                self.compare_number(int(self.data.outb))
             else:
-                print("Resetting them all because someone guessed correctly.")
+                # print("Resetting them all because someone guessed correctly.")
                 print(self.count)
-                time.sleep(3)
                 self.count += 1
                 self.response = b'2'
             connection.sendall(self.response)
             # shutdown measures
             self.data.outb = b''
+            connection.shutdown(socket.SHUT_RDWR)
+            connection.close()
 
     def decide_value(self):
         low = random.randint(0, 2147483646)
@@ -74,6 +76,7 @@ class Server:
             self.response = b'0'
             # choose another number for clients to guess
             self.value = self.decide_value()
+            self.guessed = True
             print(self.value)
 
 ###############################################################################################
@@ -83,7 +86,7 @@ class Server:
 server_object = Server( ('localhost', 6060), 3 )
 try:
     while True:
-        print("And again")
+        # print("And again")
         server_object.accept()
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")
