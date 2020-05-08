@@ -25,7 +25,13 @@ def connect_mutex(address=(),message=b''):
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         return message_back
-        
+
+# this function will connect to the 'server' to start guessing
+# the random number using the algorithm describe at the top of this
+# script. 
+# Each guess is initiated by creating a socket to connect to the 'server' with.
+# I did this because Python or something else wouldn't let me bind the client to a port
+# and just reuse the port.          
 def connect_server(address=(), message=b''):
     count = initial_count = 0
     guess = prev = 1
@@ -37,17 +43,20 @@ def connect_server(address=(), message=b''):
             # calls signal on the mutex 
             connect_mutex(mutex, signal) == b'2'
         sock.sendall(bytes(str(guess), "ascii"))
-        # I can do this without a while loop since I know
-        # the server will only send less than 64 bytes back as a response
         message_back = sock.recv(64)
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         if message_back == b'-1':
+            # double guess until guess is too high
             if increase:
                 guess *= 2
+            # if 'increase' is False, that means we can not increase our guess
+            # by multiplying it by two. That would put the guess too high.
+            # Therefore, just increment. 
             else:
                 guess += 1
         elif message_back == b'1':
+            # only define 'prev' once, otherwise the algorithm will not work
             if increase:
                 prev = guess
                 increase = False
@@ -64,6 +73,9 @@ def connect_server(address=(), message=b''):
             print("client3 broke.")
         count += 1
 
+# 'mutex' and 'server' are the addresses
+# 'mutex' holds the mutex class that will govern access to the server, while
+# 'server' will handle the random number generation and the guesses
 mutex = ('127.0.0.1', 8080)
 server = ('127.0.0.1', 6060)
 wait = b'0'
@@ -71,14 +83,16 @@ signal = b'1'
 counter = 0
 # this outer loop will control the entire client side,
 # keeping the client-server game running until the user stops it
-while counter < 15:
+while counter < 5:
     # connect to the mutex to get permission to connect to the server
     mutex_response = connect_mutex(mutex, wait)
+    # obtained a lock and can proceed to connect to the 'server'
     if mutex_response == b'1':
         # try to connect to the server
         connect_server(server, signal)
         print('client3 will start guessing')
     else:
+        # another client has a lock, so this client must wait
         print("client3 must wait")
     time.sleep(1)
     counter += 1

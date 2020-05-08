@@ -2,7 +2,8 @@
 
 # Guessing Algorithm:
 #   > Linear, starting from 0 and increasing to 2147483647
-# This client is rigged for failure
+# This client is rigged for failure. If run solo, it will crash since all available ports
+# will have been used and are now stuck in TIME_WAIT until the OS closes them.
 
 import socket, time
 
